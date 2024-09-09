@@ -13,12 +13,10 @@
 // limitations under the License.
 mod pdk;
 
-use std::error;
 
 use pdk::*;
 
-use anyhow::{anyhow, ensure, Context, Result};
-use base64::Engine;
+use anyhow::{anyhow, ensure, Result};
 use jaq_interpret::{Ctx, FilterT, ParseCtx, RcIter, Val};
 
 use extism_pdk::*;
