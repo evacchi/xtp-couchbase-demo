@@ -36,8 +36,8 @@ pub(crate) fn transform(input: DataRecord) -> Result<(), Error> {
     defs.insert_defs(jaq_std::std());
     assert!(defs.errs.is_empty()); // These are builtins it should always be valid.
 
-    let filter_s = "del(.email)";
-
+    let filter_s = config::get("jq.filter")?
+        .ok_or(Error::msg("config key `jq.filter` is required"))?;
     let (f, errs) = jaq_parse::parse(&filter_s, jaq_parse::main());
     // TODO: report parse errors more gracefully
     ensure!(errs.is_empty(), "filter {filter_s} is invalid");

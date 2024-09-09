@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -12,6 +11,7 @@ import (
 
 	sgbucket "github.com/couchbase/sg-bucket"
 	"github.com/couchbaselabs/walrus"
+	extism "github.com/extism/go-sdk"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,14 +30,18 @@ func TestSimple(t *testing.T) {
 		Value string `json:"value"`
 	}
 
-	fn := base64.StdEncoding.EncodeToString(simple)
+	manifest := extism.Manifest{
+		Wasm: []extism.Wasm{extism.WasmData{Data: simple}},
+	}
+	fn, err := json.Marshal(manifest)
+	require.NoError(t, err)
 
 	bucket := walrus.NewBucket("bucketname")
 	bucket.Add("key", 0, &MyDoc{Key: key, Value: value})
 	bucket.PutDDoc(context.Background(), "key", &sgbucket.DesignDoc{
 		Views: sgbucket.ViewMap{
 			"my-view": sgbucket.ViewDef{
-				Map: fn,
+				Map: string(fn),
 			},
 		},
 	})
@@ -60,21 +64,28 @@ func TestJq(t *testing.T) {
 		Email  string `json:"email"`
 	}
 
-	fn := base64.StdEncoding.EncodeToString(jq)
+	manifest := extism.Manifest{
+		Wasm: []extism.Wasm{extism.WasmData{Data: jq}},
+		Config: map[string]string{
+			"jq.filter": "del(.email)",
+		},
+	}
+	fn, err := json.Marshal(manifest)
+	require.NoError(t, err)
 
 	bucket := walrus.NewBucket("bucketname")
 	bucket.Add("evacchi", 0, &User{UserId: "evacchi", Email: "edoardo@example.com"})
 	bucket.Add("someone", 0, &User{UserId: "someone", Email: "someone@example.com"})
 
-	bucket.PutDDoc(context.Background(), "key", &sgbucket.DesignDoc{
+	bucket.PutDDoc(context.Background(), "wasm", &sgbucket.DesignDoc{
 		Views: sgbucket.ViewMap{
-			"my-view": sgbucket.ViewDef{
-				Map: fn,
+			"jq": sgbucket.ViewDef{
+				Map: string(fn),
 			},
 		},
 	})
 
-	result, err := bucket.View(context.Background(), "key", "my-view", nil)
+	result, err := bucket.View(context.Background(), "wasm", "jq", nil)
 	if err != nil {
 		panic(err)
 	}
