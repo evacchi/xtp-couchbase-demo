@@ -63,7 +63,7 @@ func TestJq(t *testing.T) {
 	fn := base64.StdEncoding.EncodeToString(jq)
 
 	bucket := walrus.NewBucket("bucketname")
-	bucket.Add("evacchi", 0, &User{UserId: "evacchi", Email: "edoardo@someplace.com"})
+	bucket.Add("evacchi", 0, &User{UserId: "evacchi", Email: "edoardo@example.com"})
 	bucket.Add("someone", 0, &User{UserId: "someone", Email: "someone@example.com"})
 
 	bucket.PutDDoc(context.Background(), "key", &sgbucket.DesignDoc{
